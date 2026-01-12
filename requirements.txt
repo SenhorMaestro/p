@@ -1,9 +1,11 @@
 numpy==2.2.6
 pandas==2.3.0
 pillow==11.2.1
+psycopg2-binary==2.9.10
+pyarrow==20.0.0
 requests==2.32.4
-rpds-py==0.25.1
 shapely==2.1.1
+SQLAlchemy==2.0.41
 st-annotated-text==4.0.2
 streamlit==1.46.0
 streamlit-echarts==0.4.0
