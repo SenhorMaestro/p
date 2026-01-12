@@ -1,0 +1,15 @@
+numpy==2.2.6
+pandas==2.3.0
+pillow==11.2.1
+requests==2.32.4
+rpds-py==0.25.1
+shapely==2.1.1
+st-annotated-text==4.0.2
+streamlit==1.46.0
+streamlit-echarts==0.4.0
+streamlit-image-coordinates==0.4.0
+streamlit-image-select==0.6.0
+streamlit-server-state==0.20.2
+streamlit_carousel==1.1.2
+toml==0.10.2
+urllib3==2.5.0
