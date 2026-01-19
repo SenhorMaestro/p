@@ -18,6 +18,9 @@ RATES = st.secrets['rates']
 if "print_chek" not in st.session_state:
     st.session_state["print_chek"] = False
 
+if "promo_activated" not in st.session_state:
+    st.session_state["promo_activated"] = False
+
 st.set_page_config(page_title="Оплата", page_icon="💳", layout="centered")
 
 def dec(s):
@@ -48,6 +51,7 @@ def convert_currency2(amount, from_currency, to_currency):
 def display_cart_part2(cart, cur, conditions, extra_sale_coef):
     sellers = {}
     chek_lines = []
+    chek_lines2 = []
 
     if not cart:
         return None, 0
@@ -106,6 +110,13 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
                 counter += 1
                 if int(base) in conditions['included_items']:
                     fulfilled += 1
+            if 'expiration_day' in conditions:
+                    counter += 1
+                    cur_time = datetime.utcnow() + timedelta(hours=st.secrets['hours'])
+                    cur_day = cur_time.date()
+                    last_day = datetime.strptime(conditions['expiration_day'], "%Y-%m-%d").date()
+                    if cur_day <= last_day:
+                        fulfilled += 1          
 
             if counter == fulfilled:
                 # st.write("Промокод применён")
@@ -155,10 +166,15 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
         line_total_for_seller = unit_price_without_promo * qty
         total_customer += line_total
 
+        if line_total != line_total_for_seller:
+            st.session_state["promo_activated"] = True
+
+
         # col_name, col_qty = st.columns([3,0.6])
         # with col_name:
-        chek_lines.append(f"{name} — {unit_price} {sym} (продавец {seller_id} получит {line_total_for_seller} {seller_cur} на карту {12*'*'}{seller_card_no[11:]})")
-        # st.write(f"{name} — {unit_price} {sym} (продавец {seller_id} получит {line_total_for_seller} {seller_cur} на карту {12*'*'}{seller_card_no[11:]})")
+        chek_lines.append(f"{name}")
+        chek_lines2.append(f"{name} — {unit_price} {sym} (продавец {seller_id} получит {line_total_for_seller} {seller_cur} на карту {11*'*'}{seller_card_no[11:]})")
+        # st.write(f"{name} — {unit_price} {sym} (продавец {seller_id} получит {line_total_for_seller} {seller_cur} на карту {11*'*'}{seller_card_no[11:]})")
 
 
         # with col_qty:
@@ -169,6 +185,8 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
         if qty > 0:
             chek_lines.append(f"{qty} × {unit_price} {sym} = {line_total} {sym}")
             chek_lines.append(30*'-')
+            chek_lines2.append(f"{qty} × {unit_price} {sym} = {line_total} {sym}")
+            chek_lines2.append(30*'-')
             #st.write(f"{qty} × {unit_price} {sym} = {line_total} {sym}")
             #st.markdown("---")
 
@@ -188,9 +206,11 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
     st.subheader(f"ИТОГО К ОПЛАТЕ: {total_customer} {cur}")
     chek_lines.append(f"ИТОГО: {total_customer} {cur}")
     chek_lines.append(30*'-')
+    chek_lines2.append(f"ИТОГО: {total_customer} {cur}")
+    chek_lines2.append(30*'-')
     st.markdown("---")
 
-    return total_customer, sellers, chek_lines, sh_id
+    return total_customer, sellers, chek_lines, sh_id, chek_lines2
 
 
 def int_float_calc(balance_int: int, balance_cents: int, amount: float):
@@ -296,13 +316,13 @@ def payment(cur, total_amount, df):
         if cur != 'NSN' and cur != 'BON':
             pass # оплата с центами
             new_bal, new_cents = int_float_calc(df[balance_col][0], df[cents_col][0], total_amount)
-            st.write(new_bal)
-            st.write(new_cents)
+            #st.write(new_bal)
+            #st.write(new_cents)
             upd(balance_col, cents_col, new_bal, new_cents, df['card_no'][0])
         else:
             pass # ОПЛАТА В INT
             new_bal = int(df[balance_col][0] + total_amount)
-            st.write(new_bal)
+            #st.write(new_bal)
             upd(balance_col, None, new_bal, None, df['card_no'][0])
     else:
         st.error(f"Ошибка : {condition} {total_amount}")
@@ -352,7 +372,7 @@ if time != "":
     time_condition = True
 else: 
     time_condition = False
-st.write(time)
+#st.write(time)
 
 addr_1_ind = st.query_params.get("addr_1", "")
 if addr_1_ind.isdigit():
@@ -436,15 +456,17 @@ for item in cart_str.split(";"):
 # st.write(cart)
 
 
+conditions = None
+extra_sale_coef = {'MUL': 1, 'NSN': 1, 'BON': 1}
 for promo in promos:
     if word == promo["word"]:
         # st.write("Промокод существует")
-        for k, v in promo["conditions"].items():
+        # for k, v in promo["conditions"].items():
             # st.write(f"{k} === {v}")
-            conditions = promo["conditions"]
-            extra_sale_coef = promo["extra_sale_coef"]
+        conditions = promo["conditions"]
+        extra_sale_coef = promo["extra_sale_coef"]
 
-total_user, sellers, chek_lines, sh_id = display_cart_part2(cart, cur, conditions, extra_sale_coef)
+total_user, sellers, chek_lines, sh_id, chek_lines2 = display_cart_part2(cart, cur, conditions, extra_sale_coef)
 
 
 
@@ -508,7 +530,7 @@ if st.button("Оплатить"):
                 #     st.write(df1)
                     
                 #     payment(seller_cur, +sellers[seller_id_cur], df1)
-                st.success("✅ Оплата прошла успешно!")
+                st.success("✅ Оплата прошла успешно!!!")
 
                 st.session_state["print_chek"] = True
             else: 
@@ -531,18 +553,27 @@ if st.session_state["print_chek"]:
     chek_lines.append(f"Покупатель: {user_name}")
     chek_lines.append(f"Адрес доставки: {address}")
     chek_lines.append(f"Служба доставки: {post_serv_name}")
+    chek_lines2.append(f"Номер заказа: {order_number}")
+    chek_lines2.append(f"Дата: {order_date_local.strftime('%d.%m.%Y %H:%M:%S')}")
+    chek_lines2.append(f"Покупатель: {user_name}")
+    chek_lines2.append(f"Адрес доставки: {address}")
+    chek_lines2.append(f"Служба доставки: {post_serv_name}")
     # st.markdown("---")
+    if st.session_state["promo_activated"] == True: 
+        chek_lines.append(f"Использован промокод: {word}")
+        chek_lines2.append(f"Использован промокод: {word}")
 
-    
-    for line in chek_lines:
-        st.write(line)
+    with st.expander(f"Заказ {order_number}"):
+        for line in chek_lines:
+            st.write(line)
 
 
     #st.write("отправка на email")
-    body = "\n".join(chek_lines)
+    body = "\n".join(chek_lines2)
     send_msg(body, subject=f"Заказ {order_number} от {order_date_local}")
 
     sh = next(s for s in SHOPS if str(s["id"])==str(sh_id))
     endpoint = sh["name"]
     link = f"{endpoint}?id={user_id}&o_id={order_number}"
-    st.link_button("Вернуться в магазин. Нажмите для корректного завершения оплаты", url=link)
+    st.link_button("ВЕРНУТЬСЯ В МАГАЗИН. ***Нажмите для корректного завершения оплаты!!!***", url=link)
+    st.caption("Иначе магазин не сможет подтвердить заказ")
