@@ -477,7 +477,7 @@ st.subheader("Введите данные карты")
 card_number = st.text_input(":blue[Номер карты]", key="card_number_input")
 
 st.caption(":blue[Срок действия]", help=st.secrets['help_line'])
-with st.container(horizontal=True, vertical_alignment="bottom", width="content"):
+with st.container(horizontal=True, vertical_alignment="bottom", width=400):
     expiry1 = st.text_input("a", key="expiry1_input", placeholder="ММ", max_chars=2, label_visibility="hidden")
 
     st.text("/")
