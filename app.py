@@ -494,10 +494,9 @@ if st.button("Оплатить"):
 
         order_number = random.randint(100000, 999999)
         order_date_utc = datetime.utcnow()
-        st.write(order_date_utc)
+        
         order_date_local = order_date_utc + timedelta(hours=st.secrets['tzs']['HOURS'])
-        st.write(st.secrets['tzs']['HOURS'])
-        st.write(order_date_local)
+
         if time_condition: #user needs to pay in ... minutes
             if (order_date_utc-time).total_seconds() // 60 <= st.secrets['CLEANUP_TIME_IN_MINUTES']:
 
