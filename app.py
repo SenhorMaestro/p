@@ -18,9 +18,6 @@ RATES = st.secrets['rates']
 if "print_chek" not in st.session_state:
     st.session_state["print_chek"] = False
 
-if "promo_activated" not in st.session_state:
-    st.session_state["promo_activated"] = False
-
 st.set_page_config(page_title="Оплата", page_icon="💳", layout="centered")
 
 def dec(s):
@@ -119,10 +116,10 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
                         fulfilled += 1          
 
             if counter == fulfilled:
-                # st.write("Промокод применён")
+                chek_lines2.append(f"# Промокод {word} применён #")
                 extra_sale_for_item = extra_sale_coef
             else:
-                # st.write(f"Выполнено {fulfilled}/{counter} условий")
+                chek_lines2.append(f"# Выполнено {fulfilled}/{counter} условий промокода {word} #")
                 extra_sale_for_item = {'MUL': 1, 'NSN': 1, 'BON': 1}
         else:
             # Не введён промокод
@@ -165,9 +162,6 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
         line_total = unit_price * qty
         line_total_for_seller = unit_price_without_promo * qty
         total_customer += line_total
-
-        if line_total != line_total_for_seller:
-            st.session_state["promo_activated"] = True
 
 
         # col_name, col_qty = st.columns([3,0.6])
@@ -496,13 +490,14 @@ if st.button("Оплатить"):
 
     if f"{card_number}_{verif_code}" in USERS.split(","):
 
-        st.write("Карта существует")
+        st.write("Проводим оплату...")
 
         order_number = random.randint(100000, 999999)
         order_date_utc = datetime.utcnow()
-        
-        order_date_local = order_date_utc + timedelta(st.secrets['tzs']['HOURS'])
-        
+        st.write(order_date_utc)
+        order_date_local = order_date_utc + timedelta(hours=st.secrets['tzs']['HOURS'])
+        st.write(st.secrets['tzs']['HOURS'])
+        st.write(order_date_local)
         if time_condition: #user needs to pay in ... minutes
             if (order_date_utc-time).total_seconds() // 60 <= st.secrets['CLEANUP_TIME_IN_MINUTES']:
 
@@ -557,9 +552,6 @@ if st.session_state["print_chek"]:
     chek_lines2.append(f"Адрес доставки: {address}")
     chek_lines2.append(f"Служба доставки: {post_serv_name}")
     # st.markdown("---")
-    if st.session_state["promo_activated"] == True: 
-        chek_lines.append(f"Использован промокод: {word}")
-        chek_lines2.append(f"Использован промокод: {word}")
 
     with st.expander(f"Заказ {order_number}"):
         for line in chek_lines:
@@ -568,7 +560,7 @@ if st.session_state["print_chek"]:
 
     #st.write("отправка на email")
     body = "\n".join(chek_lines2)
-    send_msg(body, subject=f"Заказ {order_number} от {order_date_local}")
+    send_msg(body, subject=f"Заказ {order_number} от {order_date_local.strftime('%d.%m.%Y %H:%M:%S')}")
 
     sh = next(s for s in SHOPS if str(s["id"])==str(sh_id))
     endpoint = sh["name"]
