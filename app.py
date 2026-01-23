@@ -479,11 +479,11 @@ card_number = st.text_input(":blue[Номер карты]", key="card_number_inp
 st.caption(":blue[Срок действия]", help=st.secrets['help_line'])
 microcol1, microcol2, microcol3, microcol4 = st.columns([0.1, 0.05, 0.1, 0.75], vertical_alignment="bottom")
 
-with microcol1:
+with st.container(horizontal=True, vertical_alignment="bottom"):
     expiry1 = st.text_input("a", key="expiry1_input", placeholder="ММ", max_chars=2, label_visibility="hidden")
-with microcol2:
+
     st.text("/")
-with microcol3:
+
     expiry2 = st.text_input("b", key="expiry2_input", placeholder="ГГ", max_chars=2, label_visibility="hidden")
 st.write("")
 verif_code = st.text_input(":blue[Смешарик-код]", type="password", key="cvv_input")
