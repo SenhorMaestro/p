@@ -135,7 +135,8 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
                                             cur)
             sym = cur
         else:
-            unit_price = math.ceil(extra_sale_for_item[cur] * prod["sale_coef"][cur] * prod["price"][cur])
+            #unit_price = math.ceil(extra_sale_for_item[cur] * prod["sale_coef"][cur] * prod["price"][cur])
+            unit_price = extra_sale_for_item[cur] * prod["sale_coef"][cur] * prod["price"][cur]
             sym = cur
 
         if seller_cur != "NSN" and seller_cur != "BON":
@@ -190,7 +191,11 @@ def display_cart_part2(cart, cur, conditions, extra_sale_coef):
             sellers[f'{seller_id}_{seller_cur}'] = line_total_for_seller
 
     #округление
-    total_customer = round(total_customer, 2)
+    if cur != "NSN" and cur != "BON":
+        total_customer = round(total_customer, 2)
+    else: 
+        total_customer = math.ceil(total_customer)
+
     for k, v in sellers.items():
         sellers[k] = round(v, 2)
 
@@ -490,38 +495,38 @@ if st.button("Оплатить"):
 
     if f"{card_number}_{verif_code}" in USERS.split(","):
 
-        st.write("Проводим оплату...")
+        st.write("Карта найдена... Ожидайте...")
 
         order_number = random.randint(100000, 999999)
         order_date_utc = datetime.utcnow()
-        
+
         order_date_local = order_date_utc + timedelta(hours=st.secrets['tzs']['HOURS'])
 
         if time_condition: #user needs to pay in ... minutes
             if (order_date_utc-time).total_seconds() // 60 <= st.secrets['CLEANUP_TIME_IN_MINUTES']:
 
-                # conn = st.connection("neon", type="sql")
+                conn = st.connection("neon", type="sql")
 
-                # # Perform query.
-                # df = get_card_info(conn, card_number)
+                # Perform query.
+                df = get_card_info(conn, card_number)
 
                 # st.write(df)
 
-                # payment(cur, -total_user, df)
+                payment(cur, -total_user, df)
 
-                # for seller_id_cur in sellers.keys():
+                for seller_id_cur in sellers.keys():
 
-                #     seller_id = seller_id_cur.split("_")[0]
-                #     seller_cur = seller_id_cur.split("_")[1]
-                #     seller_info = next(s for s in SELLERS if str(s["id"])==seller_id)
-                #     seller_card_no = seller_info["card_no"]
+                    seller_id = seller_id_cur.split("_")[0]
+                    seller_cur = seller_id_cur.split("_")[1]
+                    seller_info = next(s for s in SELLERS if str(s["id"])==seller_id)
+                    seller_card_no = seller_info["card_no"]
 
 
-                #     df1 = get_card_info(conn, seller_card_no)
+                    df1 = get_card_info(conn, seller_card_no)
 
-                #     st.write(df1)
+                    # st.write(df1)
                     
-                #     payment(seller_cur, +sellers[seller_id_cur], df1)
+                    payment(seller_cur, +sellers[seller_id_cur], df1)
                 st.success("✅ Оплата прошла успешно!!!")
 
                 st.session_state["print_chek"] = True
@@ -531,7 +536,7 @@ if st.button("Оплатить"):
             pass
             #st.write("Сценарий для перевода через qr") 
     else:
-        st.write("Пользователь не найден")
+        st.write("Карта не найдена или неверный смешарик-код")
 
 
 
